@@ -133,5 +133,108 @@ func DeleteSubFeature(w http.ResponseWriter, r *http.Request) {
 
 // 执行子功能测试
 func TestSubFeature(w http.ResponseWriter, r *http.Request) {
-	// 实现略
+	// 实现略 todo
+}
+
+func CreateSubFeatureGroup(w http.ResponseWriter, r *http.Request) {
+	var newGroup SubFeatureGroup
+	if err := json.NewDecoder(r.Body).Decode(&newGroup); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
+
+	stmt, err := db.Prepare("INSERT INTO SubFeatureGroups (GroupName, GroupDescription) VALUES (?, ?)")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer stmt.Close()
+
+	result, err := stmt.Exec(newGroup.GroupName, newGroup.GroupDescription)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	groupID, err := result.LastInsertId()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Fprintf(w, "SubFeatureGroup with ID %d created successfully", groupID)
+}
+
+func DeleteSubFeatureGroup(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	groupID := vars["groupId"]
+
+	stmt, err := db.Prepare("DELETE FROM SubFeatureGroups WHERE GroupID = ?")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer stmt.Close()
+
+	result, err := stmt.Exec(groupID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if rowsAffected, err := result.RowsAffected(); err == nil && rowsAffected == 0 {
+		http.Error(w, fmt.Sprintf("No SubFeatureGroup found with ID %s", groupID), http.StatusNotFound)
+		return
+	}
+
+	fmt.Fprintf(w, "SubFeatureGroup with ID %s deleted successfully", groupID)
+}
+
+func UpdateSubFeatureGroup(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	groupID := vars["groupId"]
+
+	var updatedGroup SubFeatureGroup
+	if err := json.NewDecoder(r.Body).Decode(&updatedGroup); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
+
+	stmt, err := db.Prepare("UPDATE SubFeatureGroups SET GroupName = ?, GroupDescription = ? WHERE GroupID = ?")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(updatedGroup.GroupName, updatedGroup.GroupDescription, groupID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Fprintf(w, "SubFeatureGroup with ID %s updated successfully", groupID)
+}
+
+func GetSubFeatureGroups(w http.ResponseWriter, r *http.Request) {
+	rows, err := db.Query("SELECT GroupID, GroupName, GroupDescription FROM SubFeatureGroups")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	var groups []SubFeatureGroup
+	for rows.Next() {
+		var group SubFeatureGroup
+		if err := rows.Scan(&group.GroupID, &group.GroupName, &group.GroupDescription); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		groups = append(groups, group)
+	}
+
+	json.NewEncoder(w).Encode(groups)
 }

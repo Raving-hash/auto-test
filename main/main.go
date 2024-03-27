@@ -32,6 +32,12 @@ func main() {
 	r.HandleFunc("/subfeatures/{id}", DeleteSubFeature).Methods("DELETE")
 	r.HandleFunc("/subfeatures/{id}/test", TestSubFeature).Methods("POST")
 
+	// 子功能组的CRUD路由
+	r.HandleFunc("/subfeaturegroups", GetSubFeatureGroups).Methods("GET")
+	r.HandleFunc("/subfeaturegroups", CreateSubFeatureGroup).Methods("POST")
+	r.HandleFunc("/subfeaturegroups/{groupId}", UpdateSubFeatureGroup).Methods("PUT")
+	r.HandleFunc("/subfeaturegroups/{groupId}", DeleteSubFeatureGroup).Methods("DELETE")
+
 	// 启动服务器
 	log.Println("Server starting on port 8081...")
 	log.Fatal(http.ListenAndServe(":8081", r))

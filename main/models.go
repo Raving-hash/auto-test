@@ -8,5 +8,8 @@ type SubFeature struct {
 	GroupID        int32  `json:"groupID"`
 }
 
-// 假设的数据库存储（请使用真实数据库替代）
-var subFeatures []SubFeature = []SubFeature{}
+type SubFeatureGroup struct {
+	GroupID          int    `json:"groupID"`
+	GroupName        string `json:"groupName"`
+	GroupDescription string `json:"groupDescription"`
+}
