@@ -95,9 +95,40 @@ func UpdateSubFeature(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "SubFeature with ID %s updated successfully", subFeatureID)
 }
 
-// 删除子功能（示例简化处理）
+// DeleteSubFeature 删除子功能的HTTP处理函数
 func DeleteSubFeature(w http.ResponseWriter, r *http.Request) {
-	// 实现略
+	// 使用mux.Vars来从请求URL中获取子功能的ID
+	vars := mux.Vars(r)
+	subFeatureID := vars["id"]
+
+	// 使用SQL删除语句，根据SubFeatureID来删除特定的子功能
+	stmt, err := db.Prepare("DELETE FROM SubFeatures WHERE SubFeatureID = ?")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer stmt.Close()
+
+	// 执行删除操作
+	result, err := stmt.Exec(subFeatureID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// 检查是否有行被删除
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if rowsAffected == 0 {
+		http.Error(w, fmt.Sprintf("No SubFeature found with ID %s", subFeatureID), http.StatusNotFound)
+		return
+	}
+
+	// 返回删除成功的信息
+	fmt.Fprintf(w, "SubFeature with ID %s deleted successfully", subFeatureID)
 }
 
 // 执行子功能测试
